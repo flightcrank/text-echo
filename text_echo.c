@@ -11,7 +11,7 @@ static SDL_Surface *charmap;
 static SDL_Surface *scroll_buff;
 
 void draw_bg() {
-		
+	
 	SDL_Rect src;
 	
 	src.x = 0;
@@ -29,7 +29,7 @@ void draw_bg() {
 int scroll_up(int x, int y) {
 
 	SDL_Rect src, dest;
-	
+
 	//copy screen to buffer
 	src.x = 0;
 	src.y = 0;
@@ -62,6 +62,32 @@ int scroll_up(int x, int y) {
 	return 0;
 }
 
+int cursor(int x, int y, int n) {
+
+	SDL_Rect src;
+
+	src.x = x;
+	src.y = y;
+	src.w = CWIDTH;
+	src.h = CHEIGHT;
+	
+	Uint32 c;
+
+	if (n == 0) {
+		
+		c = SDL_MapRGB(screen->format, 0, 234, 0);
+
+	} else {
+	
+		c = SDL_MapRGB(screen->format, 0, 0, 0);
+	}
+
+	SDL_FillRect(screen, &src, c);
+
+	return 0;
+
+}
+
 int printc(char c, int x, int y) {
 
 	SDL_Rect src, dest;
@@ -89,6 +115,12 @@ int printc(char c, int x, int y) {
 			
 				return 1;
 			}
+		
+			if (c == '\t') {
+			
+				return 3;
+			}
+
 
 			if(c == cmap[i][j]) {
 
@@ -160,7 +192,7 @@ int main() {
 	SDL_Event event;
 
 	//open file
-	FILE *fp = fopen("hack.c","r");
+	FILE *fp = fopen("text_echo.c","r");
 
 	if (fp == NULL) {
 		
@@ -178,35 +210,39 @@ int main() {
 
 	/* program loop */
 	while (quit == 0) {
-		
+	
+
 		//porcess events
 		while (SDL_PollEvent(&event)) {
 		
-			int r;
-
 			switch(event.type) {
 				
 				case SDL_KEYDOWN:
 					
 					//exit out of game loop if escape is pressed
-					switch( event.key.keysym.sym ){
+					switch( event.key.keysym.sym ) {
 					
+						int r;
+
 						case SDLK_ESCAPE:
 							
 							quit = 1;
-						break;
+							break;
 
 						default:
 							
 							//at the end of file stop processing file
 							if (c != EOF) {
 								
+								cursor(x, y, 1);
 								r = printc(c,x,y);
+								cursor(x + CWIDTH, y, 0);
 								c = fgetc(fp);
 								
 								//newline
 								if (r == 1) {
 							
+									cursor(x + CWIDTH, y, 1);
 									y += CHEIGHT;
 									x = 10;
 									
@@ -216,19 +252,28 @@ int main() {
 										y = 480 - CHEIGHT;
 										scroll_up(0,0);
 									}
-				
+
+								//char found, and blited to screen
 								} else if(r == 2) {
 						
 									x += CWIDTH;
+								
+								//tab
+								} else if(r == 3) {
+						
+									cursor(x + CWIDTH, y, 1);
+									x += CWIDTH * 3;
 								}
+						
 							} else {
 							
 								puts("END OF LINE");
 							}
-						break;
+
+							break;
 					}
 
-				break;
+					break;
 			}
 		}
 
@@ -247,8 +292,10 @@ int main() {
 	//close file
 	fclose(fp);
 
-	//free charmap surface
+	//free surfaces
 	SDL_FreeSurface(charmap);
+	SDL_FreeSurface(scroll_buff);
+	SDL_FreeSurface(screen);
 	
 	return 0;
 }
