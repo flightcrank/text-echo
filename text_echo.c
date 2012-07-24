@@ -192,7 +192,7 @@ int main() {
 	SDL_Event event;
 
 	//open file
-	FILE *fp = fopen("text_echo.c","r");
+	FILE *fp = fopen("test.txt","r");
 
 	if (fp == NULL) {
 		
@@ -202,15 +202,15 @@ int main() {
 	
 	//get first char of file
 	char c = fgetc(fp);
-	int x = 10;
+	int x = 0;
 	int y = 0;
 
 	//draw background
 	draw_bg();
-
+	cursor(x, y, 0);
+	
 	/* program loop */
 	while (quit == 0) {
-	
 
 		//porcess events
 		while (SDL_PollEvent(&event)) {
@@ -219,19 +219,21 @@ int main() {
 				
 				case SDL_KEYDOWN:
 					
-					//exit out of game loop if escape is pressed
 					switch( event.key.keysym.sym ) {
 					
-						int r;
 
+						//exit out of game loop if escape is pressed
 						case SDLK_ESCAPE:
 							
 							quit = 1;
 							break;
 
+						//if any other key is pressed
 						default:
 							
-							//at the end of file stop processing file
+							int r;
+
+							//process 1 char from file
 							if (c != EOF) {
 								
 								cursor(x, y, 1);
@@ -245,12 +247,14 @@ int main() {
 									cursor(x + CWIDTH, y, 1);
 									y += CHEIGHT;
 									x = 10;
-									
+									cursor(x, y, 0);
+
 									//last line, move screen up one line
 									if (y > 480 - CHEIGHT) {
 										
-										y = 480 - CHEIGHT;
+										cursor(x, y, 1);
 										scroll_up(0,0);
+										y = 480 - CHEIGHT;
 									}
 
 								//char found, and blited to screen
